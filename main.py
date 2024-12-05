@@ -132,6 +132,17 @@ async def handle_photo_input(message: types.Message, state: FSMContext):
 
     await state.clear()
 
+@router.callback_query(lambda query: query.data == "cancel")
+async def handle_cancel(callback_query: types.CallbackQuery, state: FSMContext):
+    """Handle user cancellation."""
+    logger.info(f"User {callback_query.from_user.id} canceled the submission process.")
+    await state.clear()
+    await callback_query.message.answer(
+        "Заявка отклонена. Вы можете начать заново нажав /start.",
+        reply_markup=None
+    )
+    await callback_query.answer()
+
 # Webhook setup
 async def on_startup(bot: Bot):
     await bot.set_webhook(f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}", secret_token=WEBHOOK_SECRET)
