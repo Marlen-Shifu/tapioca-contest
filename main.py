@@ -121,7 +121,11 @@ async def handle_photo_input(message: types.Message, state: FSMContext):
         conn.close()
 
         logger.info(f"Receipt saved with ID: {receipt_id} for user {message.from_user.id}")
-        await message.answer(f"Спасибо! Ваш номер заявки: {receipt_id}")
+        await message.answer(
+            f"Спасибо за оставленную заявку! Вы стали участником розыгрыша от Tapioca. 🎉\n"
+            f"Ваш номер заявки: {receipt_id}\n"
+            "Хотите оставить еще одну заявку? Нажмите /start."
+        )
     except Exception as e:
         logger.error(f"Error saving receipt: {e}")
         await message.answer("Произошла ошибка. Попробуйте еще раз.")
