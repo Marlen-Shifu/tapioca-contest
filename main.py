@@ -63,7 +63,7 @@ class ReceiptForm(StatesGroup):
     waiting_for_photo = State()
 
 # Router
-router = Dispatcher(storage=MemoryStorage())
+dp = Dispatcher(storage=MemoryStorage())
 
 # Helper function for cancel button
 def get_cancel_button():
@@ -72,7 +72,7 @@ def get_cancel_button():
     return buttons
 
 # Handlers
-@router.message(CommandStart())
+@dp.message(CommandStart())
 async def start_command(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} ({message.from_user.username}) started interaction.")
     await message.answer(
@@ -82,28 +82,28 @@ async def start_command(message: types.Message, state: FSMContext):
     )
     await state.set_state(ReceiptForm.waiting_for_name)
 
-@router.message(ReceiptForm.waiting_for_name)
+@dp.message(ReceiptForm.waiting_for_name)
 async def handle_name_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided name: {message.text.strip()}")
     await state.update_data(name=message.text.strip())
     await message.answer("Отправьте пожалуйста Ваш номер телефона.", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_contact)
 
-@router.message(ReceiptForm.waiting_for_contact)
+@dp.message(ReceiptForm.waiting_for_contact)
 async def handle_contact_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided contact: {message.text.strip()}")
     await state.update_data(contact=message.text.strip())
     await message.answer("Из какого города вы?", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_city)
 
-@router.message(ReceiptForm.waiting_for_city)
+@dp.message(ReceiptForm.waiting_for_city)
 async def handle_city_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided city: {message.text.strip()}")
     await state.update_data(city=message.text.strip())
     await message.answer("Пожалуйста отправьте фото чека.", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_photo)
 
-@router.message(ReceiptForm.waiting_for_photo, F.photo)
+@dp.message(ReceiptForm.waiting_for_photo, F.photo)
 async def handle_photo_input(message: types.Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
     user_data = await state.get_data()
@@ -137,9 +137,6 @@ async def on_startup(bot: Bot):
 async def main():
     init_db()
 
-    # Dispatcher
-    dp = Dispatcher()
-    dp.include_router(router)
 
     if config.PROD:
         dp.startup.register(on_startup)
