@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sys
@@ -133,7 +134,7 @@ async def on_startup(bot: Bot):
     logger.info("Webhook has been set.")
 
 # Main function
-def main():
+async def main():
     init_db()
 
     # Dispatcher
@@ -160,4 +161,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
