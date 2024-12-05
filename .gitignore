@@ -2,3 +2,5 @@ venv/
 receipts_contest.db
 config.py
 log.txt
+.idea/
+__pycache__/
