@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from os import getenv
 import sqlite3
 from aiohttp import web
 
