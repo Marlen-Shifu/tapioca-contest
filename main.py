@@ -5,7 +5,7 @@ import sys
 import sqlite3
 from aiohttp import web
 
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
@@ -63,7 +63,7 @@ class ReceiptForm(StatesGroup):
     waiting_for_photo = State()
 
 # Router
-dp = Dispatcher(storage=MemoryStorage())
+router = Router()
 
 # Helper function for cancel button
 def get_cancel_button():
@@ -72,7 +72,7 @@ def get_cancel_button():
     return buttons
 
 # Handlers
-@dp.message(CommandStart())
+@router.message(CommandStart())
 async def start_command(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} ({message.from_user.username}) started interaction.")
     await message.answer(
@@ -82,28 +82,28 @@ async def start_command(message: types.Message, state: FSMContext):
     )
     await state.set_state(ReceiptForm.waiting_for_name)
 
-@dp.message(ReceiptForm.waiting_for_name)
+@router.message(ReceiptForm.waiting_for_name)
 async def handle_name_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided name: {message.text.strip()}")
     await state.update_data(name=message.text.strip())
     await message.answer("Отправьте пожалуйста Ваш номер телефона.", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_contact)
 
-@dp.message(ReceiptForm.waiting_for_contact)
+@router.message(ReceiptForm.waiting_for_contact)
 async def handle_contact_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided contact: {message.text.strip()}")
     await state.update_data(contact=message.text.strip())
     await message.answer("Из какого города вы?", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_city)
 
-@dp.message(ReceiptForm.waiting_for_city)
+@router.message(ReceiptForm.waiting_for_city)
 async def handle_city_input(message: types.Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} provided city: {message.text.strip()}")
     await state.update_data(city=message.text.strip())
     await message.answer("Пожалуйста отправьте фото чека.", reply_markup=get_cancel_button().as_markup())
     await state.set_state(ReceiptForm.waiting_for_photo)
 
-@dp.message(ReceiptForm.waiting_for_photo, F.photo)
+@router.message(ReceiptForm.waiting_for_photo, F.photo)
 async def handle_photo_input(message: types.Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
     user_data = await state.get_data()
@@ -133,10 +133,17 @@ async def on_startup(bot: Bot):
     await bot.set_webhook(f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}", secret_token=WEBHOOK_SECRET)
     logger.info("Webhook has been set.")
 
+async def polling(dp, bot):
+    await dp.start_polling(bot, skip_updates=False)
+
+
 # Main function
-async def main():
+def main():
     init_db()
 
+    # Dispatcher
+    dp = Dispatcher()
+    dp.include_router(router)
 
     if config.PROD:
         dp.startup.register(on_startup)
@@ -154,8 +161,7 @@ async def main():
         # Start web server
         web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
     else:
-        await dp.start_polling(bot, skip_updates=False)
-
+        asyncio.run(polling(dp, bot))
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
