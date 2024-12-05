@@ -26,7 +26,7 @@ WEB_SERVER_HOST = "127.0.0.1"
 WEB_SERVER_PORT = 8080
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = config.WEBHOOK_SECRET
-BASE_WEBHOOK_URL = f"http://{config.SERVER_ADDRESS}:{WEB_SERVER_PORT}"
+BASE_WEBHOOK_URL = f"https://{config.SERVER_ADDRESS}:{WEB_SERVER_PORT}"
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
